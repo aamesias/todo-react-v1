@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Todo</title>
+  <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script src='https://unpkg.com/babel-standalone@6/babel.min.js'></script>
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+
+<body>
+  <div id='app'></div>
+
+
+  <script type='text/babel'>
+
+    function AppTitle(props) {
+        return (
+            <h1>{props.title}</h1>
+        )
+    }
+
+    function AddTodo(props) {
+        return (
+            <input 
+                type={props.type}
+                placeholder={props.placeholder}
+                value={props.value}
+                onChange={props.onChange}
+                onKeyDown={props.onKeyDown}
+            />
+        )
+    }
+
+    function MarkAllTodos(props) {
+        return (
+            <button  onClick={() => props.onToggleCompleteAllTodos()}>
+                Mark All Complete
+            </button>
+        )
+    }
+    
+    function AllTodos(props) {
+        return (
+            <div>
+                <ul>
+                    {props.list.map((todo) => (
+                        <li key={todo.item}>
+                            <input 
+                                type="checkbox"
+                                onChange={() => {props.onToggleTodo(todo.item)}}
+                            />
+                            <span>{todo.item}</span>
+                            <button onClick={() => {props.onDeleteTodo(todo.item)}}>
+                                X
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )
+    }
+
+    function DisplayNumberOfItemsLeft(props) {
+        let numOfItems = props.numOfItems
+        if(numOfItems === 1) 
+            return (<p>{numOfItems} item left</p>)
+        
+        return (
+            <p>{numOfItems} items left</p>
+        )
+    }
+
+
+    class App extends React.Component {
+        constructor(props) {
+            super(props)
+
+            this.state = {
+                todos: [
+                {
+                    item: 'eat', 
+                    isActive: true,
+                }, 
+                {
+                    item: 'sleep',
+                    isActive: true,
+                }
+                ],
+                input: '',
+                isAllComplete: false,
+            }
+
+            this.handleAddTodo = this.handleAddTodo.bind(this)
+            this.updateInput = this.updateInput.bind(this)
+            this.handleDeleteTodo = this.handleDeleteTodo.bind(this)
+            this.toggleCompleteAllTodos = this.toggleCompleteAllTodos.bind(this)
+            this.handleToggleTodo = this.handleToggleTodo.bind(this)
+        }
+
+        handleAddTodo(e) {
+            if(this.state.input !== '' && e.keyCode === 13){
+                this.setState((currentState) => {
+                    return {
+                        todos: currentState.todos.concat([{
+                            item: this.state.input,
+                            isActive: true
+                        }]), 
+                        input: '',
+                    }
+                
+                })
+            }
+        }
+
+        handleDeleteTodo(item) {
+            this.setState((currentState) => {
+                return {
+                    todos: currentState.todos.filter((todo) => todo.item !== item)
+                }
+            })
+            
+        }
+
+        updateInput(e) {
+            const value = e.target.value
+
+            this.setState({
+                input: value
+            })
+        }
+
+        handleToggleTodo(item) {
+            this.setState((currentState) => {
+                const newStateOfTodos = currentState.todos.map((todo) => {
+                    if(todo.item === item) {
+                        return ({ item: todo.item, isActive: !todo.isActive })
+                    } else {
+                        return ({ item: todo.item, isActive: todo.isActive })
+                    }
+                })
+                return {todos: newStateOfTodos, }
+            })
+        }
+
+        toggleCompleteAllTodos() {
+            this.setState((currentState) => {
+                return {
+                    isAllComplete: !this.state.isAllComplete, 
+                    todos: currentState.todos.map((todo) => ({ item: todo.item, isActive: this.state.isAllComplete }))
+                }
+            })
+            console.log(this.state)
+        }
+
+        
+
+        render() {
+            return (
+                <div>
+                    {console.log(this.state)}
+                    <AppTitle title='todos'/>
+                    <AddTodo 
+                        type='text'
+                        placeholder='What needs to be done?'
+                        value={this.state.input}
+                        onChange={this.updateInput}
+                        onKeyDown={this.handleAddTodo}
+                    />
+                    <MarkAllTodos
+                        onToggleCompleteAllTodos={this.toggleCompleteAllTodos}
+                    />
+                    <AllTodos
+                        list={this.state.todos}
+                        onDeleteTodo={this.handleDeleteTodo}
+                        onToggleTodo={this.handleToggleTodo}
+                    />
+
+                    <DisplayNumberOfItemsLeft 
+                        numOfItems= {this.state.todos.filter((todo) => todo.isActive === true).length}
+                    />
+                </div>
+            )
+        }
+    }
+
+
+    ReactDOM.render(
+      <App />,
+      document.getElementById('app')
+    )
+  </script>
+</body>
+</html>
