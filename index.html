@@ -36,12 +36,12 @@
     function MarkAllTodos(props) {
         return (
             <button  onClick={() => props.onToggleCompleteAllTodos()}>
-                Mark All Complete
+                Toggle Completion
             </button>
         )
     }
     
-    function AllTodos(props) {
+    function Todos(props) {
         return (
             <div>
                 <ul>
@@ -49,6 +49,7 @@
                         <li key={todo.item}>
                             <input 
                                 type="checkbox"
+                                checked={!todo.isActive}
                                 onChange={() => {props.onToggleTodo(todo.item)}}
                             />
                             <span>{todo.item}</span>
@@ -62,8 +63,8 @@
         )
     }
 
-    function DisplayNumberOfItemsLeft(props) {
-        let numOfItems = props.numOfItems
+    function NumberOfItemsLeft(props) {
+        const numOfItems = props.items.filter((todo) => todo.isActive === true).length
         if(numOfItems === 1) 
             return (<p>{numOfItems} item left</p>)
         
@@ -72,6 +73,21 @@
         )
     }
 
+    function Filters(props) {
+        return (
+            <ul>
+                <li><a href='#all' onClick={() => {props.onViewChange('all')}}>All</a></li>
+                <li><a href='#active' onClick={() => {props.onViewChange('active')}}>Active</a></li>
+                <li><a href='#completed' onClick={() => {props.onViewChange('completed')}}>Completed</a></li>
+            </ul>
+        )
+    }
+
+    function ClearCompleted(props) {
+        return (
+            <button onClick={() => {props.onClearCompleted()}}>Clear completed</button>
+        )
+    }
 
     class App extends React.Component {
         constructor(props) {
@@ -90,6 +106,7 @@
                 ],
                 input: '',
                 isAllComplete: false,
+                view: 'all', // different possible views: all, active, completed
             }
 
             this.handleAddTodo = this.handleAddTodo.bind(this)
@@ -97,6 +114,9 @@
             this.handleDeleteTodo = this.handleDeleteTodo.bind(this)
             this.toggleCompleteAllTodos = this.toggleCompleteAllTodos.bind(this)
             this.handleToggleTodo = this.handleToggleTodo.bind(this)
+            this.updateView = this.updateView.bind(this)
+            this.filterTodos = this.filterTodos.bind(this)
+            this.handleClearCompleted = this.handleClearCompleted.bind(this)
         }
 
         handleAddTodo(e) {
@@ -108,19 +128,30 @@
                             isActive: true
                         }]), 
                         input: '',
+                        isAllComplete: false,
                     }
                 
                 })
             }
+
         }
 
         handleDeleteTodo(item) {
             this.setState((currentState) => {
-                return {
-                    todos: currentState.todos.filter((todo) => todo.item !== item)
+                const newStateOfTodos = currentState.todos.filter((todo) => todo.item !== item)
+                const numOfActiveItems = newStateOfTodos.filter((todo) => todo.isActive === true).length
+                if (numOfActiveItems === 0) {
+                    return {
+                        isAllComplete: true,
+                        todos: newStateOfTodos
+                    }
+                } else {
+                    return {
+                        isAllComplete: false,
+                        todos: newStateOfTodos
+                    }
                 }
-            })
-            
+            }) 
         }
 
         updateInput(e) {
@@ -140,27 +171,75 @@
                         return ({ item: todo.item, isActive: todo.isActive })
                     }
                 })
-                return {todos: newStateOfTodos, }
+                const numOfActiveItems = newStateOfTodos.filter((todo) => todo.isActive === true).length
+                if(numOfActiveItems === 0) {
+                    return {
+                        todos: newStateOfTodos, 
+                        isAllComplete: true
+                    }
+                } else {
+                    return {
+                        todos: newStateOfTodos, 
+                        isAllComplete: false
+                    }
+                }
+                
             })
         }
 
         toggleCompleteAllTodos() {
             this.setState((currentState) => {
                 return {
-                    isAllComplete: !this.state.isAllComplete, 
-                    todos: currentState.todos.map((todo) => ({ item: todo.item, isActive: this.state.isAllComplete }))
+                    isAllComplete: !currentState.isAllComplete, 
+                    todos: currentState.todos.map((todo) => ({ item: todo.item, isActive: currentState.isAllComplete }))
                 }
             })
             console.log(this.state)
         }
 
-        
+        updateView(newView) {
+            this.setState({
+                view: newView
+            })
+        }
+
+        filterTodos() {
+            if (this.state.view === 'completed') {
+                return this.state.todos.filter((todo) => todo.isActive === false)
+            } else if (this.state.view === 'active') {
+                return this.state.todos.filter((todo) => todo.isActive === true)
+            } else {
+                return this.state.todos
+            }
+                
+        }
+
+        handleClearCompleted() {
+            this.setState((currentState) => {
+                const newStateOfTodos = currentState.todos.filter((todo) => todo.isActive === true)
+                const numOfActiveItems = newStateOfTodos.length
+                if (numOfActiveItems === 0) {
+                    return {
+                        isAllComplete: true,
+                        todos: newStateOfTodos
+                    }
+                } else {
+                    return {
+                        isAllComplete: false,
+                        todos: newStateOfTodos
+                    }
+                }
+            })
+        }
 
         render() {
             return (
                 <div>
                     {console.log(this.state)}
-                    <AppTitle title='todos'/>
+
+                    <AppTitle 
+                        title='todos'
+                    />
                     <AddTodo 
                         type='text'
                         placeholder='What needs to be done?'
@@ -171,15 +250,22 @@
                     <MarkAllTodos
                         onToggleCompleteAllTodos={this.toggleCompleteAllTodos}
                     />
-                    <AllTodos
-                        list={this.state.todos}
+                    <Todos
+                        list={this.filterTodos()}
                         onDeleteTodo={this.handleDeleteTodo}
                         onToggleTodo={this.handleToggleTodo}
                     />
-
-                    <DisplayNumberOfItemsLeft 
-                        numOfItems= {this.state.todos.filter((todo) => todo.isActive === true).length}
+                    <NumberOfItemsLeft 
+                        items={this.state.todos}
                     />
+                    <Filters
+                        onViewChange={this.updateView}
+                    />
+
+                    <ClearCompleted
+                        onClearCompleted={this.handleClearCompleted}
+                    />
+
                 </div>
             )
         }
