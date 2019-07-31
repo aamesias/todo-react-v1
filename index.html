@@ -23,37 +23,43 @@
 
     function AddTodo(props) {
         return (
-            <input 
-                type={props.type}
-                placeholder={props.placeholder}
-                value={props.value}
-                onChange={props.onChange}
-                onKeyDown={props.onKeyDown}
-            />
+            <div>
+                <input 
+                    type={props.type}
+                    placeholder={props.placeholder}
+                    value={props.value}
+                    onChange={props.onChange}
+                    onKeyDown={props.onKeyDown}
+                />
+            </div>
         )
     }
 
     function MarkAllTodos(props) {
         return (
-            <button  onClick={() => props.onToggleCompleteAllTodos()}>
-                Toggle Completion
-            </button>
+            <div>
+                <button className='toggle-all' onClick={() => props.onToggleCompleteAllTodos()}>
+                    ❯
+                </button>
+            </div>
         )
     }
     
     function Todos(props) {
         return (
-            <div>
-                <ul>
+            <div className='todo'>
+                <ul className='todo-list'>
                     {props.list.map((todo) => (
-                        <li key={todo.item}>
+                        <li key={todo.item} onDoubleClick={() => props.onChangeTodoText(todo.item, todo.item + ' with tacos')}>
                             <input 
+                                className='toggle'
                                 type="checkbox"
                                 checked={!todo.isActive}
                                 onChange={() => {props.onToggleTodo(todo.item)}}
                             />
                             <span>{todo.item}</span>
-                            <button onClick={() => {props.onDeleteTodo(todo.item)}}>
+                            <button className='delete'
+                                onClick={() => {props.onDeleteTodo(todo.item)}}>
                                 X
                             </button>
                         </li>
@@ -66,16 +72,16 @@
     function NumberOfItemsLeft(props) {
         const numOfItems = props.items.filter((todo) => todo.isActive === true).length
         if(numOfItems === 1) 
-            return (<p>{numOfItems} item left</p>)
+            return (<div className='todo-count'>{numOfItems} item left</div>)
         
         return (
-            <p>{numOfItems} items left</p>
+            <div className='todo-count'>{numOfItems} items left</div>
         )
     }
 
     function Filters(props) {
         return (
-            <ul>
+            <ul className='filters'>
                 <li><a href='#all' onClick={() => {props.onViewChange('all')}}>All</a></li>
                 <li><a href='#active' onClick={() => {props.onViewChange('active')}}>Active</a></li>
                 <li><a href='#completed' onClick={() => {props.onViewChange('completed')}}>Completed</a></li>
@@ -85,7 +91,12 @@
 
     function ClearCompleted(props) {
         return (
-            <button onClick={() => {props.onClearCompleted()}}>Clear completed</button>
+            <button 
+                className='filters clear-completed' 
+                onClick={() => {props.onClearCompleted()}}
+            >
+                Clear completed
+            </button>
         )
     }
 
@@ -93,7 +104,7 @@
         const todosCompleted = props.list.filter((todo) => todo.isActive === false).length
         if ( todosCompleted !== 0){
             return (
-                <div>
+                <div className='footer'>
                     <NumberOfItemsLeft 
                         items={props.list}  // when nesting components, what are naming conventions for props?
                     />                      
@@ -107,7 +118,7 @@
             )
         } else {
             return (
-                <div>
+                <div className='footer before'>
                     <NumberOfItemsLeft 
                         items={props.list}
                     />
@@ -147,6 +158,7 @@
             this.updateView = this.updateView.bind(this)
             this.filterTodos = this.filterTodos.bind(this)
             this.handleClearCompleted = this.handleClearCompleted.bind(this)
+            this.handleChangeTodoText = this.handleChangeTodoText.bind(this)
         }
 
         handleAddTodo(e) {
@@ -182,6 +194,20 @@
                     }
                 }
             }) 
+        }
+
+        handleChangeTodoText(item, newItem, e) {
+
+            this.setState((currentState) => {
+                const newStateOfTodos = currentState.todos.map((todo) => {
+                    if(todo.item === item) {
+                        return ({ item: newItem, isActive: todo.isActive })
+                    } else {
+                        return ({ item: todo.item, isActive: todo.isActive })
+                    }
+                })
+                return {todos: newStateOfTodos}
+            })
         }
 
         updateInput(e) {
@@ -264,7 +290,7 @@
 
         render() {
             return (
-                <div>
+                <div className='todoapp'>
                     {console.log(this.state)}
 
                     <AppTitle 
@@ -284,6 +310,7 @@
                         list={this.filterTodos()}
                         onDeleteTodo={this.handleDeleteTodo}
                         onToggleTodo={this.handleToggleTodo}
+                        onChangeTodoText={this.handleChangeTodoText}
                     />
 
                     <StatusBar 
