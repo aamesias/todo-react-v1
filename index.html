@@ -59,13 +59,17 @@
                         // onDoubleClick change li to input box, if 'enter' is pressed, 
                         // change input box back to li with new item text
                         <li key={todo.item} onDoubleClick={() => props.onChangeTodoText(todo.item, todo.item + ' with tacos')}>
-                            <input 
-                                className='toggle'
-                                type="checkbox"
-                                checked={!todo.isActive}
-                                onChange={() => {props.onToggleTodo(todo.item)}}
-                            />
-                            <span style={{textDecoration: todo.isActive ? 'none' : 'line-through'}}>{todo.item}</span>
+                            <label className='container'>
+                                <input 
+                                    type="checkbox"
+                                    checked={!todo.isActive}
+                                    onChange={() => {props.onToggleTodo(todo.item)}}
+                                />
+                                <span className='checkmark'></span>
+                            </label>
+                            <span style={{
+                                textDecoration: todo.isActive ? 'none' : 'line-through'
+                            }}>{todo.item}</span>
                             <button className='delete'
                                 onClick={() => {props.onDeleteTodo(todo.item)}}>
                                 ╳
