@@ -11,22 +11,23 @@
 
 <body>
   <div id='app'></div>
-
-
   <script type='text/babel'>
 
+    // Displays the title of the app
     function AppTitle(props) {
         return (
             <h1>{props.title}</h1>
         )
     }
 
+    // Displays an input box that takes in a users todo
+    // and adds it to the list after the user presses 'enter'
     function AddTodo(props) {
         return (
             <div>
                 <input 
-                    type={props.type}
-                    placeholder={props.placeholder}
+                    type='text'
+                    placeholder={props.placeholder} 
                     value={props.value}
                     onChange={props.onChange}
                     onKeyDown={props.onKeyDown}
@@ -35,11 +36,16 @@
         )
     }
 
+    // Displays a 'mark all todos' button that toggles completion
+    // and it appears when at when there is at least one task
     function MarkAllTodos(props) {
         if (props.todos.length !== 0) {
             return (
             <div>
-                <button className='toggle-all' onClick={() => props.onToggleCompleteAllTodos()}>
+                <button 
+                    className='toggle-all' 
+                    onClick={() => props.onToggleCompleteAllTodos()}
+                >
                     ❯
                 </button>
             </div>
@@ -50,6 +56,11 @@
         }
     }
     
+    // Displays a list of the todos the usesr has added.
+    // A check box is displayed next to each item to let the 
+    // user mark a task as completed.
+    // Delete task button appears when mouse hovers task
+    // Temporary: If task is double clicked the text 'with tacos' is added :)
     function Todos(props) {
         return (
             <div className='todo'>
@@ -58,7 +69,9 @@
                         // didn't have time to do double click to edit list text
                         // onDoubleClick change li to input box, if 'enter' is pressed, 
                         // change input box back to li with new item text
-                        <li key={todo.item} onDoubleClick={() => props.onChangeTodoText(todo.item, todo.item + ' with tacos')}>
+                        <li key={todo.item} 
+                            onDoubleClick={() => props.onChangeTodoText(todo.item, todo.item + ' with tacos')}
+                        >
                             <label className='container'>
                                 <input 
                                     type="checkbox"
@@ -81,6 +94,7 @@
         )
     }
 
+    // Displays how many active items are left
     function NumberOfItemsLeft(props) {
         const numOfItems = props.items.filter((todo) => todo.isActive === true).length
         if(numOfItems === 1) 
@@ -91,16 +105,31 @@
         )
     }
 
+    // Displays nav bar of filters to change the view of which tasks are
+    // shown. The three filters are All, Active, and Completed
     function Filters(props) {
         return (
             <ul className='filters'>
-                <li style={{borderColor: (props.view === "all") ? 'red' : 'none'}}><a href='#all' onClick={() => {props.onViewChange('all')}}>All</a></li>
-                <li style={{borderColor: (props.view === "active") ? 'red' : 'none'}}><a href='#active' onClick={() => {props.onViewChange('active')}}>Active</a></li>
-                <li style={{borderColor: (props.view === "completed") ? 'red' : 'none'}}><a href='#completed' onClick={() => {props.onViewChange('completed')}}>Completed</a></li>
+                <li style={{borderColor: (props.view === "all") ? 'red' : 'none'}}>
+                    <a href='#all' onClick={() => {props.onViewChange('all')}}>
+                        All
+                    </a>
+                </li>
+                <li style={{borderColor: (props.view === "active") ? 'red' : 'none'}}>
+                    <a href='#active' onClick={() => {props.onViewChange('active')}}>
+                        Active
+                    </a>
+                </li>
+                <li style={{borderColor: (props.view === "completed") ? 'red' : 'none'}}>
+                    <a href='#completed' onClick={() => {props.onViewChange('completed')}}>
+                        Completed
+                    </a>
+                </li>
             </ul>
         )
     }
 
+    // Displays 
     function ClearCompleted(props) {
         return (
             <button 
@@ -112,7 +141,10 @@
         )
     }
 
-    // clean up if else conditional returns
+    // StatusBar can display nothing, the list of items left and filter views, 
+    // or items left, filters, and a clear all completed button.
+    // clean up StatusBar if else conditional instead could 
+    // refactor ClearCompleted to look like MarkAllTodos component
     function StatusBar(props) {
         const todosCompleted = props.list.filter((todo) => todo.isActive === false).length
         
@@ -150,6 +182,13 @@
         } 
     }
 
+    /* 
+     * App is a simple todo app. Users add tasks to a list
+     * and are able mark them as complete or not. The user can 
+     * view their todos in three ways: all, active, or completed.
+     * 
+    */
+
     class App extends React.Component {
         constructor(props) {
             super(props)
@@ -181,6 +220,7 @@
             this.handleChangeTodoText = this.handleChangeTodoText.bind(this)
         }
 
+        // adds the users todo to the list
         handleAddTodo(e) {
             if(this.state.input !== '' && e.keyCode === 13){
                 this.setState((currentState) => {
@@ -198,6 +238,7 @@
 
         }
 
+        // deletes the users todo from the list
         handleDeleteTodo(item) {
             this.setState((currentState) => {
                 const newStateOfTodos = currentState.todos.filter((todo) => todo.item !== item)
@@ -216,8 +257,8 @@
             }) 
         }
 
+        // changes text of an existing todo on the list
         handleChangeTodoText(item, newItem, e) {
-
             this.setState((currentState) => {
                 const newStateOfTodos = currentState.todos.map((todo) => {
                     if(todo.item === item) {
@@ -230,6 +271,7 @@
             })
         }
 
+        // updates what's in the input box
         updateInput(e) {
             const value = e.target.value
 
@@ -238,6 +280,7 @@
             })
         }
 
+        // updates a todo's state, active or not active (completed)
         handleToggleTodo(item) {
             this.setState((currentState) => {
                 const newStateOfTodos = currentState.todos.map((todo) => {
@@ -263,6 +306,7 @@
             })
         }
 
+        // updates all todos to toggle active or not active
         toggleCompleteAllTodos() {
             this.setState((currentState) => {
                 return {
@@ -270,15 +314,16 @@
                     todos: currentState.todos.map((todo) => ({ item: todo.item, isActive: currentState.isAllComplete }))
                 }
             })
-            console.log(this.state)
         }
 
+        // updates the current filter (rename to filter to keep consistency?)
         updateView(newView) {
             this.setState({
                 view: newView
             })
         }
 
+        // returns the correct filtered todos depending on the current filter
         filterTodos() {
             if (this.state.view === 'completed') {
                 return this.state.todos.filter((todo) => todo.isActive === false)
@@ -290,6 +335,7 @@
                 
         }
 
+        // removes the completed todos from list
         handleClearCompleted() {
             this.setState((currentState) => {
                 const newStateOfTodos = currentState.todos.filter((todo) => todo.isActive === true)
@@ -317,7 +363,6 @@
                         title='todos'
                     />
                     <AddTodo 
-                        type='text'
                         placeholder='What needs to be done?'
                         value={this.state.input}
                         onChange={this.updateInput}
@@ -354,3 +399,17 @@
   </script>
 </body>
 </html>
+
+
+<!--
+    Grows: 
+        - Need to change how key values for each todo is created to allow for 
+           todos with the same task name
+        - Organize code/componenets across seperate files 
+            - intentionally decided not to do this initially due to lack of time 
+        - Add feature to allow user to edit text of exisiting todos, 
+          reuse AddTodo compnenet input box
+        - Learn and incorporate more appropriate naming conventions
+    Notes and takeaways: 
+        - 
+-->
