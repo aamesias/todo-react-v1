@@ -69,14 +69,14 @@
                         // didn't have time to do double click to edit list text
                         // onDoubleClick change li to input box, if 'enter' is pressed, 
                         // change input box back to li with new item text
-                        <li key={todo.item} 
-                            onDoubleClick={() => props.onChangeTodoText(todo.item, todo.item + ' with tacos')}
+                        <li key={todo.key} 
+                            onDoubleClick={() => props.onChangeTodoText(todo.key, todo.item + ' with tacos')}
                         >
                             <label className='container'>
                                 <input 
                                     type="checkbox"
                                     checked={!todo.isActive}
-                                    onChange={() => {props.onToggleTodo(todo.item)}}
+                                    onChange={() => {props.onToggleTodo(todo.key)}}
                                 />
                                 <span className='checkmark'></span>
                             </label>
@@ -84,7 +84,7 @@
                                 textDecoration: todo.isActive ? 'none' : 'line-through'
                             }}>{todo.item}</span>
                             <button className='delete'
-                                onClick={() => {props.onDeleteTodo(todo.item)}}>
+                                onClick={() => {props.onDeleteTodo(todo.key)}}>
                                 ╳
                             </button>
                         </li>
@@ -198,6 +198,7 @@
                 input: '',
                 isAllComplete: false,
                 view: 'all', // different possible views: all, active, completed
+                nextKey: 0,
             }
 
             this.handleAddTodo = this.handleAddTodo.bind(this)
@@ -218,10 +219,12 @@
                     return {
                         todos: currentState.todos.concat([{
                             item: this.state.input,
-                            isActive: true
+                            isActive: true, 
+                            key: this.state.nextKey,
                         }]), 
                         input: '',
                         isAllComplete: false,
+                        nextKey: this.state.nextKey + 1,
                     }
                 
                 })
@@ -230,9 +233,9 @@
         }
 
         // deletes the users todo from the list
-        handleDeleteTodo(item) {
+        handleDeleteTodo(key) {
             this.setState((currentState) => {
-                const newStateOfTodos = currentState.todos.filter((todo) => todo.item !== item)
+                const newStateOfTodos = currentState.todos.filter((todo) => todo.key !== key)
                 const numOfActiveItems = newStateOfTodos.filter((todo) => todo.isActive === true).length
                 if (numOfActiveItems === 0) {
                     return {
@@ -249,13 +252,13 @@
         }
 
         // changes text of an existing todo on the list
-        handleChangeTodoText(item, newItem, e) {
+        handleChangeTodoText(key, newItem, e) {
             this.setState((currentState) => {
                 const newStateOfTodos = currentState.todos.map((todo) => {
-                    if(todo.item === item) {
-                        return ({ item: newItem, isActive: todo.isActive })
+                    if(todo.key === key) {
+                        return {...todo, item: newItem,}
                     } else {
-                        return ({ item: todo.item, isActive: todo.isActive })
+                        return todo
                     }
                 })
                 return {todos: newStateOfTodos}
@@ -272,13 +275,13 @@
         }
 
         // updates a todo's state, active or not active (completed)
-        handleToggleTodo(item) {
+        handleToggleTodo(key) {
             this.setState((currentState) => {
                 const newStateOfTodos = currentState.todos.map((todo) => {
-                    if(todo.item === item) {
-                        return ({ item: todo.item, isActive: !todo.isActive })
+                    if(todo.key === key) {
+                        return {...todo, isActive: !todo.isActive }
                     } else {
-                        return ({ item: todo.item, isActive: todo.isActive })
+                        return todo;
                     }
                 })
                 const numOfActiveItems = newStateOfTodos.filter((todo) => todo.isActive === true).length
@@ -301,8 +304,11 @@
         toggleCompleteAllTodos() {
             this.setState((currentState) => {
                 return {
+                    ... currentState,
                     isAllComplete: !currentState.isAllComplete, 
-                    todos: currentState.todos.map((todo) => ({ item: todo.item, isActive: currentState.isAllComplete }))
+                    todos: currentState.todos.map((todo) => ({ 
+                        ...todo,
+                        isActive: currentState.isAllComplete }))
                 }
             })
         }
