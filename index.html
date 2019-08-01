@@ -36,13 +36,18 @@
     }
 
     function MarkAllTodos(props) {
-        return (
+        if (props.todos.length !== 0) {
+            return (
             <div>
                 <button className='toggle-all' onClick={() => props.onToggleCompleteAllTodos()}>
                     ❯
                 </button>
             </div>
-        )
+            )
+        }
+        else {
+            return null
+        }
     }
     
     function Todos(props) {
@@ -50,6 +55,9 @@
             <div className='todo'>
                 <ul className='todo-list'>
                     {props.list.map((todo) => (
+                        // didn't have time to do double click to edit list text
+                        // onDoubleClick change li to input box, if 'enter' is pressed, 
+                        // change input box back to li with new item text
                         <li key={todo.item} onDoubleClick={() => props.onChangeTodoText(todo.item, todo.item + ' with tacos')}>
                             <input 
                                 className='toggle'
@@ -57,10 +65,10 @@
                                 checked={!todo.isActive}
                                 onChange={() => {props.onToggleTodo(todo.item)}}
                             />
-                            <span>{todo.item}</span>
+                            <span style={{textDecoration: todo.isActive ? 'none' : 'line-through'}}>{todo.item}</span>
                             <button className='delete'
                                 onClick={() => {props.onDeleteTodo(todo.item)}}>
-                                X
+                                ╳
                             </button>
                         </li>
                     ))}
@@ -82,9 +90,9 @@
     function Filters(props) {
         return (
             <ul className='filters'>
-                <li><a href='#all' onClick={() => {props.onViewChange('all')}}>All</a></li>
-                <li><a href='#active' onClick={() => {props.onViewChange('active')}}>Active</a></li>
-                <li><a href='#completed' onClick={() => {props.onViewChange('completed')}}>Completed</a></li>
+                <li style={{borderColor: (props.view === "all") ? 'red' : 'none'}}><a href='#all' onClick={() => {props.onViewChange('all')}}>All</a></li>
+                <li style={{borderColor: (props.view === "active") ? 'red' : 'none'}}><a href='#active' onClick={() => {props.onViewChange('active')}}>Active</a></li>
+                <li style={{borderColor: (props.view === "completed") ? 'red' : 'none'}}><a href='#completed' onClick={() => {props.onViewChange('completed')}}>Completed</a></li>
             </ul>
         )
     }
@@ -100,8 +108,14 @@
         )
     }
 
+    // clean up if else conditional returns
     function StatusBar(props) {
         const todosCompleted = props.list.filter((todo) => todo.isActive === false).length
+        
+        if (props.list.length === 0) {
+            return null
+        }
+        
         if ( todosCompleted !== 0){
             return (
                 <div className='footer'>
@@ -109,6 +123,7 @@
                         items={props.list}  // when nesting components, what are naming conventions for props?
                     />                      
                     <Filters
+                        view={props.view}
                         onViewChange={props.onViewChange}
                     />
                     <ClearCompleted 
@@ -123,6 +138,7 @@
                         items={props.list}
                     />
                     <Filters 
+                        view={props.view}
                         onViewChange={props.onViewChange}
                     />
                 </div>
@@ -305,6 +321,7 @@
                     />
                     <MarkAllTodos
                         onToggleCompleteAllTodos={this.toggleCompleteAllTodos}
+                        todos={this.state.todos}
                     />
                     <Todos
                         list={this.filterTodos()}
@@ -317,6 +334,7 @@
                         list={this.state.todos}
                         onViewChange={this.updateView}
                         onClearCompleted={this.handleClearCompleted}
+                        view={this.state.view}
                     />
 
                 </div>
