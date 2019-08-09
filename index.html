@@ -69,29 +69,67 @@
                         // didn't have time to do double click to edit list text
                         // onDoubleClick change li to input box, if 'enter' is pressed, 
                         // change input box back to li with new item text
-                        <li key={todo.key} 
-                            onDoubleClick={() => props.onChangeTodoText(todo.key, todo.item + ' with tacos')}
+                        <li key={todo.key}
+                            
                         >
-                            <label className='container'>
-                                <input 
-                                    type="checkbox"
-                                    checked={!todo.isActive}
-                                    onChange={() => {props.onToggleTodo(todo.key)}}
-                                />
-                                <span className='checkmark'></span>
-                            </label>
-                            <span style={{
-                                textDecoration: todo.isActive ? 'none' : 'line-through'
-                            }}>{todo.item}</span>
-                            <button className='delete'
-                                onClick={() => {props.onDeleteTodo(todo.key)}}>
-                                ╳
-                            </button>
+                            <Item 
+                                editKey={props.editKey}
+                                todo={todo}
+                                onToggleTodo={props.onToggleTodo}
+                                onDeleteTodo={props.onDeleteTodo}
+                                onUpdateEditText={props.onUpdateEditText}
+                                value={props.value}
+                                onChangeTodoText={props.onChangeTodoText}
+                                onEditItem={props.onEditItem}
+                            />
                         </li>
                     ))}
                 </ul>
             </div>
         )
+    }
+
+    function Item(props) {
+        const todo = props.todo
+        if (props.editKey === todo.key) {
+            return (
+                <input 
+                    className = 'update-todo-text'
+                    onBlur={() => props.onChangeTodoText(todo.key)}
+                    type='text'
+                    autoFocus='autofocus'
+                    value={props.value}
+                    onChange={props.onUpdateEditText}
+                />
+            )
+        } else {
+            return (
+                <div>
+                    <label className='container'>
+                        <input 
+                            type="checkbox"
+                            checked={!todo.isActive}
+                            onChange={() => {props.onToggleTodo(todo.key)}}
+                        />
+                        <span className='checkmark'></span>
+                    </label>
+                    <div
+                        onDoubleClick={() => props.onEditItem(todo.key, todo.item)}
+                    >
+                    <span className='todo-item'
+                        style={{textDecoration: todo.isActive ? 'none' : 'line-through'}}
+                    >
+                        {todo.item}
+                    </span>
+                    <button className='delete'
+                        onClick={() => {props.onDeleteTodo(todo.key)}}>
+                        ╳
+                    </button>
+                    </div>
+                </div>
+            )
+        }
+        
     }
 
     // Displays how many active items are left
@@ -110,17 +148,17 @@
     function Filters(props) {
         return (
             <ul className='filters'>
-                <li style={{borderColor: (props.view === "all") ? 'red' : 'none'}}>
+                <li>
                     <a href='#all' onClick={() => {props.onViewChange('all')}}>
                         All
                     </a>
                 </li>
-                <li style={{borderColor: (props.view === "active") ? 'red' : 'none'}}>
+                <li>
                     <a href='#active' onClick={() => {props.onViewChange('active')}}>
                         Active
                     </a>
                 </li>
-                <li style={{borderColor: (props.view === "completed") ? 'red' : 'none'}}>
+                <li>
                     <a href='#completed' onClick={() => {props.onViewChange('completed')}}>
                         Completed
                     </a>
@@ -129,44 +167,29 @@
         )
     }
 
-    // Displays 
+    // Displays an option to delete all completed todos if there are completed todos
     function ClearCompleted(props) {
-        return (
-            <button 
-                className='filters clear-completed' 
-                onClick={() => {props.onClearCompleted()}}
-            >
-                Clear completed
-            </button>
-        )
+        const todosCompleted = props.list.filter((todo) => todo.isActive === false).length
+        if (todosCompleted !== 0) {
+            return (
+                <button 
+                    className='filters clear-completed' 
+                    onClick={() => {props.onClearCompleted()}}
+                >
+                    Clear completed
+                </button>
+            )
+        }
+        else {
+            return null
+        }
     }
 
     // StatusBar can display nothing, the list of items left and filter views, 
     // or items left, filters, and a clear all completed button.
-    // clean up StatusBar if else conditional instead could 
-    // refactor ClearCompleted to look like MarkAllTodos component
     function StatusBar(props) {
-        const todosCompleted = props.list.filter((todo) => todo.isActive === false).length
-        
         if (props.list.length === 0) {
             return null
-        }
-        
-        if ( todosCompleted !== 0){
-            return (
-                <div className='footer'>
-                    <NumberOfItemsLeft 
-                        items={props.list}  // when nesting components, what are naming conventions for props?
-                    />                      
-                    <Filters
-                        view={props.view}
-                        onViewChange={props.onViewChange}
-                    />
-                    <ClearCompleted 
-                        onClearCompleted={props.onClearCompleted}
-                    /> 
-                </div>
-            )
         } else {
             return (
                 <div className='footer before'>
@@ -177,6 +200,10 @@
                         view={props.view}
                         onViewChange={props.onViewChange}
                     />
+                    <ClearCompleted 
+                        list={props.list}
+                        onClearCompleted={props.onClearCompleted}
+                    /> 
                 </div>
             )
         } 
@@ -199,6 +226,8 @@
                 isAllComplete: false,
                 view: 'all', // different possible views: all, active, completed
                 nextKey: 0,
+                editText: '', 
+                editKey: -1,
             }
 
             this.handleAddTodo = this.handleAddTodo.bind(this)
@@ -210,6 +239,8 @@
             this.filterTodos = this.filterTodos.bind(this)
             this.handleClearCompleted = this.handleClearCompleted.bind(this)
             this.handleChangeTodoText = this.handleChangeTodoText.bind(this)
+            this.handleEditItem = this.handleEditItem.bind(this)
+            this.updateEditText = this.updateEditText.bind(this)
         }
 
         // adds the users todo to the list
@@ -252,16 +283,27 @@
         }
 
         // changes text of an existing todo on the list
-        handleChangeTodoText(key, newItem, e) {
+        handleChangeTodoText(key, e) {
+            const editText = this.state.editText
+            if(editText === '') {
+                return this.handleDeleteTodo(key)
+            }
             this.setState((currentState) => {
+    
                 const newStateOfTodos = currentState.todos.map((todo) => {
                     if(todo.key === key) {
-                        return {...todo, item: newItem,}
+                        return {...todo, item: editText,
+                    }
                     } else {
                         return todo
                     }
                 })
-                return {todos: newStateOfTodos}
+                
+                return {
+                    todos: newStateOfTodos, 
+                    editKey: -1, 
+                    editText: '',
+                }
             })
         }
 
@@ -320,6 +362,21 @@
             })
         }
 
+        handleEditItem(key, item) {
+            this.setState({
+                editKey: key,
+                editText: item
+            })
+        }
+
+        updateEditText(e) {
+            const value = e.target.value
+
+            this.setState({
+                editText: value
+            })
+        }
+
         // returns the correct filtered todos depending on the current filter
         filterTodos() {
             if (this.state.view === 'completed') {
@@ -371,9 +428,14 @@
                     />
                     <Todos
                         list={this.filterTodos()}
+                        editKey={this.state.editKey}
                         onDeleteTodo={this.handleDeleteTodo}
                         onToggleTodo={this.handleToggleTodo}
                         onChangeTodoText={this.handleChangeTodoText}
+
+                        onEditItem={this.handleEditItem}
+                        onUpdateEditText={this.updateEditText}
+                        value={this.state.editText}
                     />
 
                     <StatusBar 
